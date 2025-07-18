@@ -35,13 +35,107 @@ contract DiaryDapp {
     }
 
     // 내 일기 전체 조회 함수
-    function getMyDiaries() external view returns (Diary[] memory) {
+    function getMyDiaries() external view returns (Diary[] memory) { //view 는 상태를 읽기만 하는 함수
         return diaries[msg.sender];
     }
 
+    // 내 일기의 개수 조회 함수
+    function getCount() external view returns (uint256) {
+        return diaries[msg.sender].length; //내 일기의 개수를 반환하는 함수
+    }
+
+    // 특정 기분의 일기 조회 함수
+    function getDiaryByMood(Mood mood) external view returns (Diary[] memory) {
+
+        uint256 count = 0;
+        for (uint256 i = 0; i < diaries[msg.sender].length; i++) {
+            if (diaries[msg.sender][i].mood == mood) {
+                count++;
+            }
+        }
+
+        Diary [] memory filteredDiaries = new Diary[](count);
+        uint256 j = 0;
+        for (uint256 i = 0; i < diaries[msg.sender].length; i++) {
+            if (diaries[msg.sender][i].mood == mood){
+                filteredDiaries[j] = diaries[msg.sender][i];
+                j++;
+            }
+        }
+        return filteredDiaries; //필터링된 일기 배열 반환
+    }
+
+
     // 특정 일기 조회 함수 (옵션)
-    function getDiary(uint256 _index) external view returns (Diary memory) {
+    function getDiary(uint256 _index) external view returns (Diary memory) { //_index는 일기의 인덱스
         require(_index < diaries[msg.sender].length, "Invalid index");
         return diaries[msg.sender][_index];
+    }
+
+    // 특정 기간 동안의 일기 조회 함수
+    function getDiaryByPeriod(uint256 startDate, uint256 endDate) external view returns (Diary[] memory) {
+        require(startDate <= endDate, "Invalid date range");
+
+        uint256 count = 0;
+        for (uint256 i = 0; i < diaries[msg.sender].length; i++) {
+            if (diaries[msg.sender][i].date >= startDate && diaries[msg.sender][i].date <= endDate) {
+                count++;
+            }
+        }
+
+        Diary[] memory filteredDiaries = new Diary[](count);
+
+        uint256 j = 0;
+        for (uint256 i = 0; i < diaries[msg.sender].length; i++) {
+            if (diaries[msg.sender][i].date >= startDate && diaries[msg.sender][i].date <= endDate) {
+                filteredDiaries[j] = diaries[msg.sender][i];
+                j++;
+            }
+        }
+        return filteredDiaries;
+    }
+
+    // 키워드로 일기 제목 검색 함수
+    function getDiaryByKeyword(string memory keyword) external view returns (Diary[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < diaries[msg.sender].length; i++) {
+            if (containsKeyword(diaries[msg.sender][i].title, keyword)) {
+                count++;
+            }
+        }
+
+        Diary[] memory filteredDiaries = new Diary[](count);
+
+        uint256 j = 0;
+        for (uint256 i = 0; i < diaries[msg.sender].length; i++) {
+            if (containsKeyword(diaries[msg.sender][i].title, keyword)) {
+                filteredDiaries[j] = diaries[msg.sender][i];
+                j++;
+            }
+        }
+        return filteredDiaries;
+    }
+
+    // 키워드가 포함된 일기 제목을 찾는 내부 함수
+    function containsKeyword(string memory str, string memory keyword) internal pure returns (bool) {
+        bytes memory strBytes = bytes (str);
+        bytes memory keywordBytes = bytes(keyword);
+        if (strBytes.length < keywordBytes.length) {
+            return false; // 문자열이 키워드보다 짧으면 false
+        }
+
+        for (uint256 i = 0; i <= strBytes.length - keywordBytes.length; i++) {
+            bool found = true;
+            for (uint256 j = 0; j < keywordBytes.length; j++) {
+                if (strBytes[i + j] != keywordBytes[j]) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found) {
+                return true;
+            }
+        }
+        return false;
     }
 }
